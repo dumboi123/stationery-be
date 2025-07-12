@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # Test databases
+  postgres-test:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=microservices_test_db
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_password
+    ports:
+      - "5433:5432"
+    networks:
+      - test-network
+
+  redis-test:
+    image: redis:6-alpine
+    ports:
+      - "6380:6379"
+    networks:
+      - test-network
+
+  # Test services
+  api-gateway-test:
+    build:
+      context: ./services/api-gateway
+      target: development
+    environment:
+      - NODE_ENV=test
+      - PORT=3000
+      - DB_HOST=postgres-test
+      - REDIS_HOST=redis-test
+    depends_on:
+      - postgres-test
+      - redis-test
+    networks:
+      - test-network
+
+  user-service-test:
+    build:
+      context: ./services/user-service
+    environment:
+      - GO_ENV=test
+      - DB_HOST=postgres-test
+      - REDIS_HOST=redis-test
+    depends_on:
+      - postgres-test
+      - redis-test
+    networks:
+      - test-network
+
+  product-service-test:
+    build:
+      context: ./services/product-service
+    environment:
+      - PYTHON_ENV=test
+      - DATABASE_URL=postgresql://test_user:test_password@postgres-test:5432/microservices_test_db
+    depends_on:
+      - postgres-test
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge

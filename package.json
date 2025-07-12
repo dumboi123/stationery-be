@@ -1,0 +1,64 @@
+{
+  "name": "microservices-root",
+  "version": "1.0.0",
+  "description": "Multi-language microservices architecture",
+  "private": true,
+  "scripts": {
+    "setup": "chmod +x scripts/setup/*.sh && ./scripts/setup/install-dependencies.sh",
+    "build": "docker-compose build",
+    "build:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml build",
+    "build:prod": "docker-compose -f docker-compose.yml -f docker-compose.prod.yml build",
+    "start": "docker-compose up -d",
+    "start:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d",
+    "start:prod": "docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d",
+    "stop": "docker-compose down",
+    "restart": "npm run stop && npm run start",
+    "logs": "docker-compose logs -f",
+    "test": "chmod +x scripts/test/*.sh && ./scripts/test/test-all.sh",
+    "test:unit": "./scripts/test/test-unit.sh",
+    "test:integration": "./scripts/test/test-integration.sh",
+    "test:e2e": "./scripts/test/test-e2e.sh",
+    "lint": "./scripts/build/lint-all.sh",
+    "proto:gen": "cd shared/proto && ./scripts/generate-all.sh",
+    "docs:gen": "./scripts/docs/generate-docs.sh",
+    "db:migrate": "./scripts/database/migrate.sh",
+    "db:seed": "./scripts/database/seed.sh",
+    "db:reset": "./scripts/database/reset.sh",
+    "clean": "docker-compose down -v && docker system prune -f",
+    "clean:all": "docker-compose down -v && docker system prune -af",
+    "monitor": "docker-compose -f infrastructure/monitoring/docker-compose.monitoring.yml up -d",
+    "monitor:stop": "docker-compose -f infrastructure/monitoring/docker-compose.monitoring.yml down"
+  },
+  "keywords": [
+    "microservices",
+    "docker",
+    "golang",
+    "python",
+    "nodejs",
+    "java",
+    "grpc",
+    "postgresql",
+    "redis",
+    "rabbitmq"
+  ],
+  "author": "Your Development Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.2",
+    "prettier": "^2.8.8"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/microservices-architecture.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/microservices-architecture/issues"
+  },
+  "homepage": "https://github.com/yourusername/microservices-architecture#readme"
+}
