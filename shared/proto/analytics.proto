@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package analytics;
+
+option go_package = "github.com/company/microservices/analytics";
+
+// Analytics Service
+service AnalyticsService {
+  rpc TrackEvent(TrackEventRequest) returns (TrackEventResponse);
+  rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse);
+  rpc GenerateReport(GenerateReportRequest) returns (GenerateReportResponse);
+  rpc GetDashboardData(GetDashboardDataRequest) returns (GetDashboardDataResponse);
+}
+
+// Messages
+message TrackEventRequest {
+  string event_type = 1;
+  string user_id = 2;
+  map<string, string> properties = 3;
+  int64 timestamp = 4;
+}
+
+message TrackEventResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetMetricsRequest {
+  string metric_type = 1;
+  int64 start_time = 2;
+  int64 end_time = 3;
+  map<string, string> filters = 4;
+}
+
+message GetMetricsResponse {
+  repeated MetricData metrics = 1;
+}
+
+message GenerateReportRequest {
+  string report_type = 1;
+  int64 start_time = 2;
+  int64 end_time = 3;
+  map<string, string> parameters = 4;
+}
+
+message GenerateReportResponse {
+  string report_id = 1;
+  string report_url = 2;
+  string status = 3;
+}
+
+message GetDashboardDataRequest {
+  string dashboard_type = 1;
+  string user_id = 2;
+  map<string, string> filters = 3;
+}
+
+message GetDashboardDataResponse {
+  repeated DashboardWidget widgets = 1;
+}
+
+message MetricData {
+  string name = 1;
+  double value = 2;
+  int64 timestamp = 3;
+  map<string, string> dimensions = 4;
+}
+
+message DashboardWidget {
+  string id = 1;
+  string type = 2;
+  string title = 3;
+  repeated MetricData data = 4;
+  map<string, string> config = 5;
+}

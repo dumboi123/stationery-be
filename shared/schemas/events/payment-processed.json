@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Payment Processed Event",
+  "description": "Event emitted when a payment is successfully processed",
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "description": "Unique identifier for this event"
+    },
+    "eventType": {
+      "type": "string",
+      "const": "payment.processed"
+    },
+    "version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the event occurred"
+    },
+    "source": {
+      "type": "string",
+      "const": "payment-service"
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "paymentId": {
+          "type": "string",
+          "description": "Unique identifier for the payment"
+        },
+        "orderId": {
+          "type": "string",
+          "description": "ID of the order being paid"
+        },
+        "userId": {
+          "type": "string",
+          "description": "ID of the user making the payment"
+        },
+        "amount": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Payment amount"
+        },
+        "currency": {
+          "type": "string",
+          "enum": ["USD", "EUR", "VND"],
+          "description": "Payment currency"
+        },
+        "method": {
+          "type": "string",
+          "enum": ["credit_card", "debit_card", "paypal", "bank_transfer", "cash"],
+          "description": "Payment method used"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "completed", "failed", "refunded"],
+          "description": "Payment status"
+        },
+        "transactionId": {
+          "type": "string",
+          "description": "External transaction ID from payment provider"
+        }
+      },
+      "required": ["paymentId", "orderId", "userId", "amount", "currency", "method", "status"]
+    }
+  },
+  "required": ["eventId", "eventType", "version", "timestamp", "source", "data"]
+}

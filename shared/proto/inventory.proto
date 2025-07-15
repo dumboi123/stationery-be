@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package inventory;
+
+option go_package = "github.com/company/microservices/inventory";
+
+// Inventory Service
+service InventoryService {
+  rpc CheckStock(CheckStockRequest) returns (CheckStockResponse);
+  rpc ReserveStock(ReserveStockRequest) returns (ReserveStockResponse);
+  rpc ReleaseStock(ReleaseStockRequest) returns (ReleaseStockResponse);
+  rpc UpdateStock(UpdateStockRequest) returns (UpdateStockResponse);
+  rpc GetInventory(GetInventoryRequest) returns (GetInventoryResponse);
+}
+
+// Messages
+message CheckStockRequest {
+  string product_id = 1;
+  int32 quantity = 2;
+  string location = 3;
+}
+
+message CheckStockResponse {
+  bool available = 1;
+  int32 current_stock = 2;
+  string message = 3;
+}
+
+message ReserveStockRequest {
+  string product_id = 1;
+  int32 quantity = 2;
+  string order_id = 3;
+  string location = 4;
+}
+
+message ReserveStockResponse {
+  string reservation_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message ReleaseStockRequest {
+  string reservation_id = 1;
+}
+
+message ReleaseStockResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message UpdateStockRequest {
+  string product_id = 1;
+  int32 quantity = 2;
+  string operation = 3; // add, subtract, set
+  string location = 4;
+}
+
+message UpdateStockResponse {
+  bool success = 1;
+  int32 new_stock = 2;
+  string message = 3;
+}
+
+message GetInventoryRequest {
+  string product_id = 1;
+  string location = 2;
+}
+
+message GetInventoryResponse {
+  InventoryItem inventory = 1;
+}
+
+message InventoryItem {
+  string id = 1;
+  string product_id = 2;
+  int32 quantity = 3;
+  int32 reserved = 4;
+  int32 available = 5;
+  string location = 6;
+  int64 last_updated = 7;
+}

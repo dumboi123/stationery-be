@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Blog Post Published Event",
+  "description": "Event emitted when a blog post is published",
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "description": "Unique identifier for this event"
+    },
+    "eventType": {
+      "type": "string",
+      "const": "blog.published"
+    },
+    "version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the event occurred"
+    },
+    "source": {
+      "type": "string",
+      "const": "blog-service"
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "postId": {
+          "type": "string",
+          "description": "Unique identifier for the blog post"
+        },
+        "title": {
+          "type": "string",
+          "description": "Blog post title"
+        },
+        "authorId": {
+          "type": "string",
+          "description": "Author's user ID"
+        },
+        "category": {
+          "type": "string",
+          "description": "Blog post category"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Blog post tags"
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the post was published"
+        },
+        "slug": {
+          "type": "string",
+          "description": "URL-friendly slug for the post"
+        },
+        "isScheduled": {
+          "type": "boolean",
+          "description": "Whether this was a scheduled post"
+        }
+      },
+      "required": ["postId", "title", "authorId", "category", "publishedAt", "slug"]
+    }
+  },
+  "required": ["eventId", "eventType", "version", "timestamp", "source", "data"]
+}

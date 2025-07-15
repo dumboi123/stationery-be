@@ -19,9 +19,12 @@ services:
       - ANALYTICS_SERVICE_URL=http://analytics-service:8083
       - DB_HOST=postgres
       - REDIS_HOST=redis
+      - REDIS_PASSWORD=password
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
       - postgres
       - redis
+      - kafka
     volumes:
       - ./services/api-gateway:/app
       - /app/node_modules
@@ -39,15 +42,18 @@ services:
       - PORT=8080
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_NAME=microservices_db
+      - DB_NAME=user_db
       - DB_USER=admin
       - DB_PASSWORD=password
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=password
       - JWT_SECRET=your-secret-key
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
       - postgres
       - redis
+      - kafka
     networks:
       - microservices
 
@@ -60,11 +66,16 @@ services:
       - "8000:8000"
     environment:
       - PORT=8000
-      - DATABASE_URL=postgresql://admin:password@postgres:5432/microservices_db
+      - MONGODB_URL=mongodb://admin:password@mongodb:27017/product_db?authSource=admin
       - REDIS_URL=redis://redis:6379
+      - REDIS_PASSWORD=password
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
-      - postgres
+      - mongodb
       - redis
+      - elasticsearch
+      - kafka
     volumes:
       - ./services/product-service:/app
     networks:
@@ -79,14 +90,17 @@ services:
       - "8082:8082"
     environment:
       - PORT=8082
-      - DATABASE_URL=postgresql://admin:password@postgres:5432/microservices_db
+      - ORACLE_URL=oracle://admin:password@oracle:1521/XEPDB1
       - REDIS_URL=redis://redis:6379
+      - REDIS_PASSWORD=password
       - RABBITMQ_URL=amqp://admin:password@rabbitmq:5672
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - RUST_LOG=info
     depends_on:
-      - postgres
+      - oracle
       - redis
       - rabbitmq
+      - kafka
     networks:
       - microservices
 
@@ -101,11 +115,17 @@ services:
       - PORT=8081
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_NAME=microservices_db
+      - DB_NAME=payment_db
       - DB_USER=admin
       - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=password
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
       - postgres
+      - redis
+      - kafka
     networks:
       - microservices
 
@@ -120,8 +140,13 @@ services:
       - PORT=3001
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=password
+      - RABBITMQ_URL=amqp://admin:password@rabbitmq:5672
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
       - redis
+      - rabbitmq
+      - kafka
     volumes:
       - ./services/notification-service:/app
       - /app/node_modules
@@ -137,37 +162,131 @@ services:
       - "8083:8083"
     environment:
       - PORT=8083
-      - DATABASE_URL=postgresql://admin:password@postgres:5432/microservices_db
+      - ORACLE_URL=oracle://admin:password@oracle:1521/XEPDB1
       - REDIS_URL=redis://redis:6379
+      - REDIS_PASSWORD=password
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - RUST_LOG=info
     depends_on:
-      - postgres
+      - oracle
       - redis
+      - elasticsearch
+      - kafka
     networks:
       - microservices
 
-  # PostgreSQL Database
+  # PostgreSQL Database (User, Payment, Blog Services)
   postgres:
     image: postgres:13
     environment:
       - POSTGRES_DB=microservices_db
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=password
+      - POSTGRES_MULTIPLE_DATABASES=user_db,payment_db,blog_db
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./database/postgres/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh
     networks:
       - microservices
 
-  # Redis Cache
+  # MongoDB Database (Product, Inventory Services)
+  mongodb:
+    image: mongo:5
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+      - MONGO_INITDB_DATABASE=microservices_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./database/mongodb/init.js:/docker-entrypoint-initdb.d/init.js
+    networks:
+      - microservices
+
+  # Oracle Database (Order, Analytics Services)
+  oracle:
+    image: container-registry.oracle.com/database/express:21.3.0-xe
+    environment:
+      - ORACLE_PWD=password
+      - ORACLE_CHARACTERSET=AL32UTF8
+      - ORACLE_DATABASE=XEPDB1
+      - ORACLE_USER=admin
+      - ORACLE_PASSWORD=password
+    ports:
+      - "1521:1521"
+      - "5500:5500"
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+      - ./database/oracle/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - microservices
+
+  # Redis Cache (All Services)
   redis:
     image: redis:6-alpine
+    command: redis-server --appendonly yes --requirepass password
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
+      - ./database/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - microservices
+
+  # Elasticsearch (Search and Analytics)
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - microservices
+
+  # Apache Kafka (Message Streaming)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.0.1
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+    networks:
+      - microservices
+
+  kafka:
+    image: confluentinc/cp-kafka:7.0.1
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
     networks:
       - microservices
 
@@ -180,8 +299,10 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=admin
       - RABBITMQ_DEFAULT_PASS=password
+      - RABBITMQ_DEFAULT_VHOST=/
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+      - ./config/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
     networks:
       - microservices
 
@@ -199,9 +320,17 @@ services:
 
 volumes:
   postgres_data:
+  mongodb_data:
+  oracle_data:
   redis_data:
+  elasticsearch_data:
+  zookeeper_data:
+  zookeeper_logs:
+  kafka_data:
   rabbitmq_data:
 
 networks:
   microservices:
     driver: bridge
+
+

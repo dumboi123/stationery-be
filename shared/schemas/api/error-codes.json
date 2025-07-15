@@ -1,0 +1,32 @@
+{
+  "UNAUTHORIZED": {
+    "code": 401,
+    "message": "Authentication required",
+    "description": "Valid JWT token is required to access this resource"
+  },
+  "FORBIDDEN": {
+    "code": 403,
+    "message": "Access denied",
+    "description": "User does not have permission to access this resource"
+  },
+  "NOT_FOUND": {
+    "code": 404,
+    "message": "Resource not found",
+    "description": "The requested resource does not exist"
+  },
+  "VALIDATION_ERROR": {
+    "code": 422,
+    "message": "Validation failed",
+    "description": "Input validation failed for one or more fields"
+  },
+  "INTERNAL_ERROR": {
+    "code": 500,
+    "message": "Internal server error",
+    "description": "An unexpected error occurred on the server"
+  },
+  "SERVICE_UNAVAILABLE": {
+    "code": 503,
+    "message": "Service temporarily unavailable",
+    "description": "The service is temporarily unavailable, please try again later"
+  }
+}

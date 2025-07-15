@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - SERVER_PORT=8001
+      - SERVER_HOST=0.0.0.0
+      - GIN_MODE=release
+      - DB_HOST=user-postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres123
+      - DB_NAME=user_service_db
+      - DB_SSL_MODE=disable
+      - JWT_SECRET=super-secret-jwt-key-for-user-service-production
+      - JWT_ACCESS_DURATION=15
+      - JWT_REFRESH_DURATION=24
+      - REDIS_HOST=user-redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
+    depends_on:
+      - user-postgres
+      - user-redis
+    networks:
+      - user-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  user-postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=user_service_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres123
+    volumes:
+      - user_postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5433:5432"
+    networks:
+      - user-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  user-redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    volumes:
+      - user_redis_data:/data
+    networks:
+      - user-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  user_postgres_data:
+  user_redis_data:
+
+networks:
+  user-network:
+    driver: bridge

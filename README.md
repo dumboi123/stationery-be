@@ -14,11 +14,17 @@
 
 ## 🏗️ Kiến Trúc 9 Services
 
-**API Gateway** (Node.js + Redis) → **User Service** (Go + PostgreSQL) → **Product Service** (Python + MongoDB)
+**API Gateway** (Node.js + Redis) -> Trình
+**User Service** (Go + PostgreSQL) -> Trình + Hiệu
+**Order Service** (Java + Oracle) or (Go + PostgreSQL) -> Chánh
+**Product Service** (Nodejs + MongoDB) -> Khải + Nam
+**Inventory Service** (Go + MongoDB) -> Nam
+**Cart Service** (Node.js + Redis) -> Chánh
+**Payment Service** (Go + PostgreSQL) -> Khải
 
-**Inventory Service** (Go + MongoDB) → **Cart Service** (Node.js + Redis) → **Order Service** (Java + Oracle)
+<!-- **Analytics Service** (Java + Oracle)  -->
+<!-- **Blog Service** (Node.js + PostgreSQL) -->
 
-**Blog Service** (Node.js + PostgreSQL) → **Analytics Service** (Java + Oracle) → **Payment Service** (Go + PostgreSQL)
 
 ### Lý Do Chọn Tech Stack
 

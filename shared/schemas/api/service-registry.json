@@ -1,0 +1,172 @@
+{
+  "services": {
+    "user-service": {
+      "name": "user-service",
+      "language": "go",
+      "framework": "gin",
+      "database": "postgresql",
+      "port": 8001,
+      "health_endpoint": "/health",
+      "metrics_endpoint": "/metrics",
+      "grpc_port": 9001,
+      "dependencies": ["redis"],
+      "env_required": [
+        "DB_HOST",
+        "DB_PORT", 
+        "DB_NAME",
+        "DB_USER",
+        "DB_PASSWORD",
+        "JWT_SECRET",
+        "REDIS_URL"
+      ]
+    },
+    "product-service": {
+      "name": "product-service",
+      "language": "python",
+      "framework": "fastapi",
+      "database": "mongodb",
+      "port": 8002,
+      "health_endpoint": "/health",
+      "metrics_endpoint": "/metrics",
+      "grpc_port": 9002,
+      "dependencies": ["mongodb"],
+      "env_required": [
+        "MONGODB_URI",
+        "MONGODB_DB_NAME",
+        "JWT_SECRET"
+      ]
+    },
+    "inventory-service": {
+      "name": "inventory-service",
+      "language": "go",
+      "framework": "fiber",
+      "database": "mongodb",
+      "port": 8003,
+      "health_endpoint": "/health",
+      "metrics_endpoint": "/metrics",
+      "grpc_port": 9003,
+      "dependencies": ["mongodb"],
+      "env_required": [
+        "MONGODB_URI",
+        "MONGODB_DB_NAME",
+        "JWT_SECRET"
+      ]
+    },
+    "cart-service": {
+      "name": "cart-service",
+      "language": "nodejs",
+      "framework": "express",
+      "database": "redis",
+      "port": 8004,
+      "health_endpoint": "/health",
+      "metrics_endpoint": "/metrics",
+      "grpc_port": 9004,
+      "dependencies": ["redis"],
+      "env_required": [
+        "REDIS_URL",
+        "JWT_SECRET",
+        "SESSION_SECRET"
+      ]
+    },
+    "order-service": {
+      "name": "order-service",
+      "language": "java",
+      "framework": "spring-boot",
+      "database": "oracle",
+      "port": 8005,
+      "health_endpoint": "/actuator/health",
+      "metrics_endpoint": "/actuator/metrics",
+      "grpc_port": 9005,
+      "dependencies": ["oracle", "kafka"],
+      "env_required": [
+        "ORACLE_URL",
+        "ORACLE_USERNAME",
+        "ORACLE_PASSWORD",
+        "KAFKA_BROKERS",
+        "JWT_SECRET"
+      ]
+    },
+    "payment-service": {
+      "name": "payment-service",
+      "language": "go",
+      "framework": "gin",
+      "database": "postgresql",
+      "port": 8006,
+      "health_endpoint": "/health",
+      "metrics_endpoint": "/metrics",
+      "grpc_port": 9006,
+      "dependencies": ["postgresql"],
+      "env_required": [
+        "DB_HOST",
+        "DB_PORT",
+        "DB_NAME",
+        "DB_USER",
+        "DB_PASSWORD",
+        "JWT_SECRET",
+        "STRIPE_SECRET_KEY",
+        "PAYPAL_CLIENT_ID",
+        "PAYPAL_CLIENT_SECRET"
+      ]
+    },
+    "blog-service": {
+      "name": "blog-service",
+      "language": "nodejs",
+      "framework": "nestjs",
+      "database": "postgresql",
+      "port": 8007,
+      "health_endpoint": "/health",
+      "metrics_endpoint": "/metrics",
+      "grpc_port": 9007,
+      "dependencies": ["postgresql"],
+      "env_required": [
+        "DB_HOST",
+        "DB_PORT",
+        "DB_NAME",
+        "DB_USER",
+        "DB_PASSWORD",
+        "JWT_SECRET",
+        "OPENAI_API_KEY"
+      ]
+    },
+    "analytics-service": {
+      "name": "analytics-service",
+      "language": "java",
+      "framework": "spring-boot",
+      "database": "oracle",
+      "port": 8008,
+      "health_endpoint": "/actuator/health",
+      "metrics_endpoint": "/actuator/metrics",
+      "grpc_port": 9008,
+      "dependencies": ["oracle", "kafka"],
+      "env_required": [
+        "ORACLE_URL",
+        "ORACLE_USERNAME",
+        "ORACLE_PASSWORD",
+        "KAFKA_BROKERS",
+        "JWT_SECRET"
+      ]
+    },
+    "api-gateway": {
+      "name": "api-gateway",
+      "language": "nodejs",
+      "framework": "express",
+      "database": "redis",
+      "port": 8000,
+      "health_endpoint": "/health",
+      "metrics_endpoint": "/metrics",
+      "dependencies": ["redis", "all-services"],
+      "env_required": [
+        "REDIS_URL",
+        "JWT_SECRET",
+        "USER_SERVICE_URL",
+        "PRODUCT_SERVICE_URL",
+        "INVENTORY_SERVICE_URL",
+        "CART_SERVICE_URL",
+        "ORDER_SERVICE_URL",
+        "PAYMENT_SERVICE_URL",
+        "BLOG_SERVICE_URL",
+        "ANALYTICS_SERVICE_URL"
+      ]
+    }
+  }
+}

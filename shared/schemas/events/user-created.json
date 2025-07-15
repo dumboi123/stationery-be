@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "User Created Event",
+  "description": "Event emitted when a new user is created",
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "description": "Unique identifier for this event"
+    },
+    "eventType": {
+      "type": "string",
+      "const": "user.created"
+    },
+    "version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the event occurred"
+    },
+    "source": {
+      "type": "string",
+      "const": "user-service"
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Unique identifier for the user"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "User's email address"
+        },
+        "username": {
+          "type": "string",
+          "description": "User's username"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["user", "admin", "moderator"],
+          "description": "User's role in the system"
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the user account is active"
+        }
+      },
+      "required": ["userId", "email", "username", "role", "isActive"]
+    }
+  },
+  "required": ["eventId", "eventType", "version", "timestamp", "source", "data"]
+}

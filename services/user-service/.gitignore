@@ -1,0 +1,75 @@
+# Binaries
+/bin/
+/tmp/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Logs
+/logs/
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker volumes
+/data/
+/postgres_data/
+/redis_data/
+
+# Temporary files
+/temp/
+/tmp/
+
+# Coverage files
+coverage.out
+coverage.html
+
+# Air (live reloading tool)
+/tmp/
+air_tmp/
+
+# Vendor directory
+/vendor/
+
+# Go mod cache
+go.sum
+
+# Local development files
+/scripts/local/
+/config/local/

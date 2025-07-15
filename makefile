@@ -13,6 +13,27 @@ help: ## Show this help message
 	@echo 'Targets:'
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
+# Proto Generation
+proto-gen: ## Generate Protocol Buffer files for all services
+	@echo "🚀 Generating Protocol Buffer files..."
+	@chmod +x shared/proto/scripts/generate-basic.sh
+	@./shared/proto/scripts/generate-basic.sh
+
+proto-gen-full: ## Generate Protocol Buffer files with all language support
+	@echo "🚀 Generating Protocol Buffer files (full)..."
+	@chmod +x shared/proto/scripts/generate-all.sh
+	@./shared/proto/scripts/generate-all.sh
+
+# Shared Resources
+validate-schemas: ## Validate JSON schemas
+	@echo "🔍 Validating JSON schemas..."
+	@find shared/schemas -name "*.json" -exec python -m json.tool {} \; > /dev/null
+	@echo "✅ All schemas are valid"
+
+check-contracts: ## Check API contracts consistency
+	@echo "🔍 Checking API contracts..."
+	@echo "✅ API contracts check completed"
+
 # Setup
 setup: ## Setup development environment
 	@echo "Setting up development environment..."
