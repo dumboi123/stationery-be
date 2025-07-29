@@ -1,61 +1,222 @@
-const express = require('express');
-const { createProxyMiddleware } = require('http-proxy-middleware');
-const config = require('../config');
+const express = require("express");
+const { proxyMiddlewares } = require("../middleware/proxy");
+const { requireAuth } = require("../middleware/auth");
+const { rateLimiter } = require("../middleware/rateLimiter");
+const logger = require("../utils/logger");
+
+// ✅ Import admin routes
+const rateLimitRoutes = require("./rateLimit");
 
 const router = express.Router();
 
-// User Service Routes
-router.use('/users', createProxyMiddleware({
-  target: config.services.user,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/users': '/api/v1/users'
-  }
-}));
+// API Documentation route
+router.get("/", (req, res) => {
+  res.json({
+    message: "API Gateway - Microservices Backend",
+    version: "1.0.0",
+    timestamp: new Date().toISOString(),
+    services: {
+      "user-service": "/api/users",
+      "product-service": "/api/products",
+      "order-service": "/api/orders",
+      "payment-service": "/api/payments",
+      "inventory-service": "/api/inventory",
+      "cart-service": "/api/cart",
+      "blog-service": "/api/blog",
+    },
+    endpoints: {
+      health: "/health",
+      auth: "/api/auth",
+      docs: "/api/docs",
+    },
+  });
+});
 
-// Product Service Routes
-router.use('/products', createProxyMiddleware({
-  target: config.services.product,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/products': '/api/v1/products'
-  }
-}));
+// User Service Routes - Requires authentication for most operations
+router.use(
+  "/users",
+  rateLimiter.createRoleBasedLimiter("user"),
+  requireAuth,
+  proxyMiddlewares.userService
+);
 
-// Order Service Routes
-router.use('/orders', createProxyMiddleware({
-  target: config.services.order,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/orders': '/api/v1/orders'
-  }
-}));
+// Public user routes (registration, login được handle ở auth routes)
+router.use("/users/public", rateLimiter.general, proxyMiddlewares.userService);
 
-// Payment Service Routes
-router.use('/payments', createProxyMiddleware({
-  target: config.services.payment,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/payments': '/api/v1/payments'
-  }
-}));
+// Product Service Routes - Mixed public/private
+router.use(
+  "/products",
+  rateLimiter.general,
+  // requireAuth, // Comment out nếu muốn public
+  proxyMiddlewares.productService
+);
 
-// Notification Service Routes
-router.use('/notifications', createProxyMiddleware({
-  target: config.services.notification,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/notifications': '/api/v1/notifications'
-  }
-}));
+// Order Service Routes - Requires authentication
+router.use(
+  "/orders",
+  rateLimiter.createRoleBasedLimiter("user"),
+  requireAuth,
+  proxyMiddlewares.orderService
+);
 
-// Analytics Service Routes
-router.use('/analytics', createProxyMiddleware({
-  target: config.services.analytics,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/analytics': '/api/v1/analytics'
+// Payment Service Routes - Requires authentication + special rate limiting
+router.use(
+  "/payments",
+  rateLimiter.createEndpointLimiter("payment"), // ✅ Specific rate limiting cho payments
+  requireAuth,
+  proxyMiddlewares.paymentService
+);
+
+// Order Service Routes - Requires authentication + order rate limiting
+router.use(
+  "/orders",
+  rateLimiter.createEndpointLimiter("order"), // ✅ Specific rate limiting cho orders
+  requireAuth,
+  proxyMiddlewares.orderService
+);
+
+// Inventory Service Routes - Admin only for writes, public for reads
+router.use(
+  "/inventory",
+  rateLimiter.general,
+  // Có thể add role-based auth middleware ở đây
+  proxyMiddlewares.inventoryService
+);
+
+// Cart Service Routes - Requires authentication
+router.use(
+  "/cart",
+  rateLimiter.createRoleBasedLimiter("user"),
+  requireAuth,
+  proxyMiddlewares.cartService
+);
+
+// Blog Service Routes - Mixed public/private
+router.use(
+  "/blog",
+  rateLimiter.general,
+  // optionalAuth, // User có thể logged in hoặc không
+  proxyMiddlewares.blogService
+);
+
+// API Documentation endpoint
+router.get("/docs", (req, res) => {
+  res.json({
+    swagger: "2.0",
+    info: {
+      title: "Microservices API Gateway",
+      version: "1.0.0",
+      description: "API Gateway for microservices architecture",
+    },
+    host: req.get("host"),
+    basePath: "/api",
+    schemes: ["http", "https"],
+    consumes: ["application/json"],
+    produces: ["application/json"],
+    paths: {
+      "/users": {
+        get: { summary: "Get users", tags: ["Users"] },
+        post: { summary: "Create user", tags: ["Users"] },
+      },
+      "/products": {
+        get: { summary: "Get products", tags: ["Products"] },
+        post: { summary: "Create product", tags: ["Products"] },
+      },
+      "/orders": {
+        get: { summary: "Get orders", tags: ["Orders"] },
+        post: { summary: "Create order", tags: ["Orders"] },
+      },
+      "/payments": {
+        post: { summary: "Process payment", tags: ["Payments"] },
+      },
+      "/inventory": {
+        get: { summary: "Check inventory", tags: ["Inventory"] },
+      },
+      "/cart": {
+        get: { summary: "Get cart", tags: ["Cart"] },
+        post: { summary: "Add to cart", tags: ["Cart"] },
+      },
+      "/blog": {
+        get: { summary: "Get blog posts", tags: ["Blog"] },
+        post: { summary: "Create blog post", tags: ["Blog"] },
+      },
+    },
+    securityDefinitions: {
+      Bearer: {
+        type: "apiKey",
+        name: "Authorization",
+        in: "header",
+        description: "JWT Bearer token",
+      },
+    },
+    security: [{ Bearer: [] }],
+  });
+});
+
+// Error handling for route not found in this router
+router.use("*", (req, res) => {
+  logger.warn(`Route not found`, {
+    method: req.method,
+    path: req.originalUrl,
+    ip: req.ip,
+    userAgent: req.get("User-Agent"),
+  });
+
+  res.status(404).json({
+    error: "Not Found",
+    message: `Route ${req.method} ${req.originalUrl} not found`,
+    availableRoutes: [
+      "GET /api/",
+      "GET /api/docs",
+      "GET /api/health",
+      "/api/users/*",
+      "/api/products/*",
+      "/api/orders/*",
+      "/api/payments/*",
+      "/api/inventory/*",
+      "/api/cart/*",
+      "/api/blog/*",
+      "/api/admin/rate-limit/* (Admin only)",
+    ],
+  });
+});
+
+// ✅ Admin routes for rate limiting management
+router.use("/admin/rate-limit", rateLimitRoutes);
+
+// Health check endpoint
+router.get("/health", async (req, res) => {
+  try {
+    const rateLimitHealth = await rateLimiter.healthCheck();
+
+    res.json({
+      success: true,
+      message: "API Gateway is healthy",
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      rateLimiter: rateLimitHealth,
+      availableRoutes: [
+        "GET /api/",
+        "GET /api/docs",
+        "GET /api/health",
+        "/api/users/*",
+        "/api/products/*",
+        "/api/orders/*",
+        "/api/payments/*",
+        "/api/inventory/*",
+        "/api/cart/*",
+        "/api/blog/*",
+        "/api/admin/rate-limit/* (Admin only)",
+      ],
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Health check failed",
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
   }
-}));
+});
 
 module.exports = router;

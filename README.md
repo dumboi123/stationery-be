@@ -6,7 +6,7 @@
 
 ## 🎯 Những Gì Bạn Sẽ Học
 
-- **4 Ngôn Ngữ**: Go, Python, Node.js, Java trong môi trường production
+- **3 Ngôn Ngữ**: Go, Node.js, Java trong môi trường production
 - **4 Database**: PostgreSQL, MongoDB, Oracle, Redis với use cases thực tế
 - **Microservices Patterns**: API Gateway, Circuit Breakers, Event Sourcing, CQRS
 - **Cloud-Native**: Docker, Kubernetes, gRPC, REST APIs

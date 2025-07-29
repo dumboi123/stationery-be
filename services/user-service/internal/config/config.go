@@ -42,33 +42,52 @@ type RedisConfig struct {
 }
 
 func LoadConfig() *Config {
-	return &Config{
-		Server: ServerConfig{
-			Port: getEnv("SERVER_PORT", "8001"),
-			Host: getEnv("SERVER_HOST", "0.0.0.0"),
-			Mode: getEnv("GIN_MODE", "debug"),
-		},
-		Database: DatabaseConfig{
-			Host:     getEnv("DB_HOST", "localhost"),
-			Port:     getEnvAsInt("DB_PORT", 5432),
-			User:     getEnv("DB_USER", "postgres"),
-			Password: getEnv("DB_PASSWORD", "postgres"),
-			DBName:   getEnv("DB_NAME", "user_service_db"),
-			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
-		},
-		JWT: JWTConfig{
-			SecretKey:            getEnv("JWT_SECRET", "your-super-secret-key-change-in-production"),
-			AccessTokenDuration:  getEnvAsInt("JWT_ACCESS_DURATION", 15),  // 15 minutes
-			RefreshTokenDuration: getEnvAsInt("JWT_REFRESH_DURATION", 24), // 24 hours
-		},
-		Redis: RedisConfig{
-			Host:     getEnv("REDIS_HOST", "localhost"),
-			Port:     getEnv("REDIS_PORT", "6379"),
-			Password: getEnv("REDIS_PASSWORD", ""),
-			DB:       getEnvAsInt("REDIS_DB", 0),
-		},
-	}
+    return &Config{
+        Database: DatabaseConfig{
+            Host:     getEnv("DB_HOST", "postgres"),        // Đổi từ "localhost" thành "postgres"
+            Port:     getEnvAsInt("DB_PORT", 5432),         // Đổi từ 5432 thành 5432
+            User:     getEnv("DB_USER", "postgres"),
+            Password: getEnv("DB_PASSWORD", "password"),     // Đổi từ "postgres" thành "password"
+            DBName:   getEnv("DB_NAME", "user_db"),         // Đổi từ "user_service_db" thành "user_db"
+            SSLMode:  getEnv("DB_SSL_MODE", "disable"),
+        },
+        Redis: RedisConfig{
+            Host:     getEnv("REDIS_HOST", "redis"),        // Đổi từ "localhost" thành "redis"
+            Port:     getEnv("REDIS_PORT", "6379"),
+            Password: getEnv("REDIS_PASSWORD", "password"), // Thêm password
+            DB:       getEnvAsInt("REDIS_DB", 0),
+        },
+    }
 }
+
+// func LoadConfig() *Config {
+// 	return &Config{
+// 		Server: ServerConfig{
+// 			Port: getEnv("SERVER_PORT", "8001"),
+// 			Host: getEnv("SERVER_HOST", "0.0.0.0"),
+// 			Mode: getEnv("GIN_MODE", "debug"),
+// 		},
+// 		Database: DatabaseConfig{
+// 			Host:     getEnv("DB_HOST", "localhost"),
+// 			Port:     getEnvAsInt("DB_PORT", 5432),
+// 			User:     getEnv("DB_USER", "postgres"),
+// 			Password: getEnv("DB_PASSWORD", "postgres"),
+// 			DBName:   getEnv("DB_NAME", "user_service_db"),
+// 			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
+// 		},
+// 		JWT: JWTConfig{
+// 			SecretKey:            getEnv("JWT_SECRET", "your-super-secret-key-change-in-production"),
+// 			AccessTokenDuration:  getEnvAsInt("JWT_ACCESS_DURATION", 15),  // 15 minutes
+// 			RefreshTokenDuration: getEnvAsInt("JWT_REFRESH_DURATION", 24), // 24 hours
+// 		},
+// 		Redis: RedisConfig{
+// 			Host:     getEnv("REDIS_HOST", "localhost"),
+// 			Port:     getEnv("REDIS_PORT", "6379"),
+// 			Password: getEnv("REDIS_PASSWORD", ""),
+// 			DB:       getEnvAsInt("REDIS_DB", 0),
+// 		},
+// 	}
+// }
 
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {

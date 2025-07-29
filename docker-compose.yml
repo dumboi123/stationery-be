@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # API Gateway (Node.js)
   api-gateway:
@@ -10,21 +8,23 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=development
+      - DEBUG=*
       - PORT=3000
       - USER_SERVICE_URL=http://user-service:8080
       - PRODUCT_SERVICE_URL=http://product-service:8000
       - ORDER_SERVICE_URL=http://order-service:8082
       - PAYMENT_SERVICE_URL=http://payment-service:8081
       - NOTIFICATION_SERVICE_URL=http://notification-service:3001
+      - INVENTORY_SERVICE_URL=http://inventory-service:8084
+      - CART_SERVICE_URL=http://cart-service:3002
+      - BLOG_SERVICE_URL=http://blog-service:3003
       - ANALYTICS_SERVICE_URL=http://analytics-service:8083
-      - DB_HOST=postgres
       - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
       - REDIS_PASSWORD=password
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
-      - postgres
       - redis
-      - kafka
     volumes:
       - ./services/api-gateway:/app
       - /app/node_modules
@@ -45,19 +45,14 @@ services:
       - DB_NAME=user_db
       - DB_USER=admin
       - DB_PASSWORD=password
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=password
       - JWT_SECRET=your-secret-key
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
       - postgres
-      - redis
-      - kafka
+      # - kafka
     networks:
       - microservices
 
-  # Product Service (Python)
+  # Product Service (Node.js)
   product-service:
     build:
       context: ./services/product-service
@@ -65,23 +60,18 @@ services:
     ports:
       - "8000:8000"
     environment:
+      - NODE_ENV=development
       - PORT=8000
       - MONGODB_URL=mongodb://admin:password@mongodb:27017/product_db?authSource=admin
-      - REDIS_URL=redis://redis:6379
-      - REDIS_PASSWORD=password
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
       - mongodb
-      - redis
-      - elasticsearch
-      - kafka
     volumes:
       - ./services/product-service:/app
+      - /app/node_modules
     networks:
       - microservices
 
-  # Order Service (Rust)
+  # Order Service (Java)
   order-service:
     build:
       context: ./services/order-service
@@ -90,17 +80,10 @@ services:
       - "8082:8082"
     environment:
       - PORT=8082
+      - SPRING_PROFILES_ACTIVE=development
       - ORACLE_URL=oracle://admin:password@oracle:1521/XEPDB1
-      - REDIS_URL=redis://redis:6379
-      - REDIS_PASSWORD=password
-      - RABBITMQ_URL=amqp://admin:password@rabbitmq:5672
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - RUST_LOG=info
     depends_on:
       - oracle
-      - redis
-      - rabbitmq
-      - kafka
     networks:
       - microservices
 
@@ -118,14 +101,8 @@ services:
       - DB_NAME=payment_db
       - DB_USER=admin
       - DB_PASSWORD=password
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=password
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
       - postgres
-      - redis
-      - kafka
     networks:
       - microservices
 
@@ -133,27 +110,78 @@ services:
   notification-service:
     build:
       context: ./services/notification-service
-      target: development
     ports:
       - "3001:3001"
     environment:
+      - NODE_ENV=development
       - PORT=3001
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=password
-      - RABBITMQ_URL=amqp://admin:password@rabbitmq:5672
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-    depends_on:
-      - redis
-      - rabbitmq
-      - kafka
     volumes:
       - ./services/notification-service:/app
       - /app/node_modules
     networks:
       - microservices
 
-  # Analytics Service (Rust)
+  # Inventory Service (Go)
+  inventory-service:
+    build:
+      context: ./services/inventory-service
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8084"
+    environment:
+      - PORT=8084
+      - MONGODB_URL=mongodb://admin:password@mongodb:27017/inventory_db?authSource=admin
+    depends_on:
+      - mongodb
+    networks:
+      - microservices
+
+  # Cart Service (Node.js)
+  cart-service:
+    build:
+      context: ./services/cart-service
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=1
+      - REDIS_PASSWORD=password
+    depends_on:
+      - redis
+    volumes:
+      - ./services/cart-service:/app
+      - /app/node_modules
+    networks:
+      - microservices
+
+  # Blog Service (Node.js)
+  blog-service:
+    build:
+      context: ./services/blog-service
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=blog_db
+      - DB_USER=admin
+      - DB_PASSWORD=password
+    depends_on:
+      - postgres
+    volumes:
+      - ./services/blog-service:/app
+      - /app/node_modules
+    networks:
+      - microservices
+
+  # Analytics Service (Java)
   analytics-service:
     build:
       context: ./services/analytics-service
@@ -162,17 +190,10 @@ services:
       - "8083:8083"
     environment:
       - PORT=8083
+      - SPRING_PROFILES_ACTIVE=development
       - ORACLE_URL=oracle://admin:password@oracle:1521/XEPDB1
-      - REDIS_URL=redis://redis:6379
-      - REDIS_PASSWORD=password
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - RUST_LOG=info
     depends_on:
       - oracle
-      - redis
-      - elasticsearch
-      - kafka
     networks:
       - microservices
 
@@ -234,79 +255,10 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-      - ./database/redis/redis.conf:/usr/local/etc/redis/redis.conf
     networks:
       - microservices
 
-  # Elasticsearch (Search and Analytics)
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
-    environment:
-      - discovery.type=single-node
-      - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - xpack.security.enabled=false
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-    networks:
-      - microservices
-
-  # Apache Kafka (Message Streaming)
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.0.1
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - "2181:2181"
-    volumes:
-      - zookeeper_data:/var/lib/zookeeper/data
-      - zookeeper_logs:/var/lib/zookeeper/log
-    networks:
-      - microservices
-
-  kafka:
-    image: confluentinc/cp-kafka:7.0.1
-    depends_on:
-      - zookeeper
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-    ports:
-      - "9092:9092"
-    volumes:
-      - kafka_data:/var/lib/kafka/data
-    networks:
-      - microservices
-
-  # RabbitMQ Message Queue
-  rabbitmq:
-    image: rabbitmq:3-management
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      - RABBITMQ_DEFAULT_USER=admin
-      - RABBITMQ_DEFAULT_PASS=password
-      - RABBITMQ_DEFAULT_VHOST=/
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-      - ./config/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-    networks:
-      - microservices
-
-  # Nginx Load Balancer
+  # Nginx Load Balancer (Development)
   nginx:
     image: nginx:alpine
     ports:
@@ -317,20 +269,15 @@ services:
       - api-gateway
     networks:
       - microservices
+    profiles:
+      - production # Only start in production
 
 volumes:
   postgres_data:
   mongodb_data:
   oracle_data:
   redis_data:
-  elasticsearch_data:
-  zookeeper_data:
-  zookeeper_logs:
-  kafka_data:
-  rabbitmq_data:
 
 networks:
   microservices:
     driver: bridge
-
-

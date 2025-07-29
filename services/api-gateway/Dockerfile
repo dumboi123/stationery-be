@@ -1,25 +1,38 @@
-FROM node:18-alpine AS base
-
-# Create app directory
+# ===================================
+# STAGE 1: BASE
+# ===================================
+FROM node:24.1.0-alpine AS base
 WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
 
-# Install dependencies
-# RUN npm ci --only=production && npm cache clean --force
-RUN npm ci --omit=dev && npm cache clean --force
-
-# Development stage
+# ===================================
+# STAGE 2: DEVELOPMENT (cho học tập)
+# ===================================
 FROM base AS development
-RUN npm ci
+RUN npm install
 COPY . .
 EXPOSE 3000
 CMD ["npm", "run", "dev"]
 
-# Production stage
-FROM base AS production
-COPY . .
-USER node
+# ===================================
+# STAGE 3: PRODUCTION (an toàn)
+# ===================================
+FROM node:24.1.0-alpine AS production
+
+# Security: Tạo non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S apigateway -u 1001
+
+WORKDIR /app
+
+# Ownership và copy files
+COPY --from=base --chown=apigateway:nodejs /app/package*.json ./
+RUN npm ci --only=production --no-audit --no-fund && npm cache clean --force
+
+COPY --chown=apigateway:nodejs src/ ./src/
+
+# Switch to non-root user
+USER apigateway
+
 EXPOSE 3000
 CMD ["npm", "start"]
