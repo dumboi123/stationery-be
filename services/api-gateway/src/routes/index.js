@@ -67,14 +67,6 @@ router.use(
   proxyMiddlewares.paymentService
 );
 
-// Order Service Routes - Requires authentication + order rate limiting
-router.use(
-  "/orders",
-  rateLimiter.createEndpointLimiter("order"), // ✅ Specific rate limiting cho orders
-  requireAuth,
-  proxyMiddlewares.orderService
-);
-
 // Inventory Service Routes - Admin only for writes, public for reads
 router.use(
   "/inventory",

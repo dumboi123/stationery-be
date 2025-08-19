@@ -6,6 +6,10 @@ const PORT = config.port || 3000;
 const server = app.listen(PORT, () => {
   console.log(`🚀 API Gateway running on port ${PORT}`);
   console.log(`📝 Environment: ${config.nodeEnv}`);
+  console.log("🐳 Docker Environment Check:");
+  console.log("NODE_ENV:", process.env.NODE_ENV);
+  console.log("REDIS_HOST:", process.env.REDIS_HOST);
+  console.log("REDIS_PORT:", process.env.REDIS_PORT);
 });
 
 // Kết thuc tiến trình khi nhận tín hiệu dừng

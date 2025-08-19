@@ -22,7 +22,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0
-      - REDIS_PASSWORD=password
+      - REDIS_PASSWORD=bluesky
     depends_on:
       - redis
     volumes:
@@ -250,7 +250,7 @@ services:
   # Redis Cache (All Services)
   redis:
     image: redis:6-alpine
-    command: redis-server --appendonly yes --requirepass password
+    command: redis-server --appendonly yes --requirepass bluesky
     ports:
       - "6379:6379"
     volumes:

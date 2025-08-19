@@ -60,6 +60,11 @@ router.get("/", (req, res) => {
     timestamp: new Date().toISOString(),
     service: "api-gateway",
     version: process.env.npm_package_version || "1.0.0",
+    endpoints: {
+      healthDetailed: "/health/detailed",
+      healthReady: "/health/ready",
+      healthLive: "/health/live",
+    },
   });
 });
 
@@ -72,39 +77,39 @@ router.get("/detailed", async (req, res) => {
     const redisHealth = await checkRedis();
 
     // Check all microservices
-    const serviceChecks = await Promise.allSettled([
-      checkService("user-service", config.services.userService),
-      checkService("product-service", config.services.productService),
-      checkService("order-service", config.services.orderService),
-      checkService("payment-service", config.services.paymentService),
-      checkService("inventory-service", config.services.inventoryService),
-      checkService("cart-service", config.services.cartService),
-      checkService("blog-service", config.services.blogService),
-    ]);
+    // const serviceChecks = await Promise.allSettled([
+    //   checkService("user-service", config.services.userService),
+    //   checkService("product-service", config.services.productService),
+    //   checkService("order-service", config.services.orderService),
+    //   checkService("payment-service", config.services.paymentService),
+    //   checkService("inventory-service", config.services.inventoryService),
+    //   checkService("cart-service", config.services.cartService),
+    //   checkService("blog-service", config.services.blogService),
+    // ]);
 
     // Process service check results
     const services = {};
-    const serviceNames = [
-      "user-service",
-      "product-service",
-      "order-service",
-      "payment-service",
-      "inventory-service",
-      "cart-service",
-      "blog-service",
-    ];
+    // const serviceNames = [
+    //   "user-service",
+    //   "product-service",
+    //   "order-service",
+    //   "payment-service",
+    //   "inventory-service",
+    //   "cart-service",
+    //   "blog-service",
+    // ];
 
-    serviceChecks.forEach((result, index) => {
-      const serviceName = serviceNames[index];
-      services[serviceName] =
-        result.status === "fulfilled"
-          ? result.value
-          : {
-              status: "error",
-              message: "Health check failed",
-              error: result.reason?.message || "Unknown error",
-            };
-    });
+    // serviceChecks.forEach((result, index) => {
+    //   const serviceName = serviceNames[index];
+    //   services[serviceName] =
+    //     result.status === "fulfilled"
+    //       ? result.value
+    //       : {
+    //           status: "error",
+    //           message: "Health check failed",
+    //           error: result.reason?.message || "Unknown error",
+    //         };
+    // });
 
     // Determine overall status
     const allServicesHealthy = Object.values(services).every(

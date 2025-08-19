@@ -107,7 +107,6 @@ class RedisClient {
         console.log("👋 Redis disconnected gracefully");
       } catch (error) {
         console.error("❌ Error disconnecting Redis:", error.message);
-        // Force disconnect
         if (this.client) {
           this.client.disconnect();
         }
@@ -124,7 +123,43 @@ class RedisClient {
     return this.client;
   }
 
-  // ✅ Helper methods với graceful fallback
+  async ping() {
+    try {
+      const client = this.getClient();
+      if (!client) {
+        throw new Error("Redis client not connected");
+      }
+
+      const result = await client.ping();
+      return result;
+    } catch (error) {
+      console.error("Redis PING error:", error.message);
+      throw error;
+    }
+  }
+
+  // 🔥 Enhanced health check method
+  async isHealthy() {
+    try {
+      const result = await this.ping();
+      return result === "PONG";
+    } catch (error) {
+      console.error("Redis health check failed:", error.message);
+      return false;
+    }
+  }
+
+  // 🔥 Get connection status
+  getConnectionStatus() {
+    return {
+      isConnected: this.isConnected,
+      hasClient: !!this.client,
+      connectionAttempts: this.connectionAttempts,
+      maxRetries: this.maxRetries,
+    };
+  }
+
+  // Helper methods với graceful fallback
   async set(key, value, expireInSeconds = null) {
     try {
       const client = this.getClient();
@@ -144,6 +179,7 @@ class RedisClient {
       return false;
     }
   }
+
 
   async get(key) {
     try {
@@ -173,19 +209,6 @@ class RedisClient {
       return true;
     } catch (error) {
       console.error("Redis DEL error:", error.message);
-      return false;
-    }
-  }
-
-  // ✅ Method để check health
-  async isHealthy() {
-    try {
-      const client = this.getClient();
-      if (!client) return false;
-
-      await client.ping();
-      return true;
-    } catch (error) {
       return false;
     }
   }

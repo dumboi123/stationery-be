@@ -223,7 +223,7 @@ module.exports = {
   requireAuth: authMiddleware.requireAuth,
   optionalAuth: authMiddleware.optionalAuth,
   requireRole: authMiddleware.requireRole,
-  requirePermission: authMiddleware.requirePermission,
+  requirePermissions: authMiddleware.requirePermissions,
   blacklistToken: authMiddleware.blacklistToken,
   // Also export the instance
   authMiddleware,
